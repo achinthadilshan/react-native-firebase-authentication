@@ -10,6 +10,7 @@ import React, { useState } from 'react'
 import {
    signInWithEmailAndPassword,
    createUserWithEmailAndPassword,
+   updateProfile,
 } from 'firebase/auth'
 import { auth } from '../../firebase'
 
@@ -17,30 +18,42 @@ const LoginScreen = () => {
    const [email, setEmail] = useState('')
    const [password, setPassword] = useState('')
    const [confirmPassword, setConfirmPassword] = useState('')
+   const [username, setUsername] = useState('')
    const [switchMethod, setSwitchMethod] = useState(false)
 
    const switchMethodHandler = () => {
       setSwitchMethod(!switchMethod)
    }
 
-   const loginHandler = () => {
+   const loginHandler = async () => {
       if (switchMethod) {
-         createUserWithEmailAndPassword(auth, email, password)
-            .then((userCredential) => {
-               const user = userCredential.user
-               console.log(user.email)
-            })
-            .catch((error) => {
-               console.log(error.message)
-            })
+         try {
+            const response = await createUserWithEmailAndPassword(
+               auth,
+               email,
+               password
+            )
+
+            console.log(response.user.email)
+
+            if (response) {
+               const displayName = await updateProfile(auth.currentUser, {
+                  displayName: username,
+               })
+            }
+
+            console.log(auth.currentUser)
+         } catch (error) {
+            console.log(error.code)
+         }
       } else {
          signInWithEmailAndPassword(auth, email, password)
             .then((userCredential) => {
                const user = userCredential.user
-               console.log(user.email)
+               console.log(user)
             })
             .catch((error) => {
-               console.log(error.message)
+               console.log(error.code, error.message)
             })
       }
    }
@@ -48,6 +61,14 @@ const LoginScreen = () => {
    return (
       <KeyboardAvoidingView style={styles.container} behavior="padding">
          <View style={styles.inputConatiner}>
+            {switchMethod && (
+               <TextInput
+                  value={username}
+                  onChangeText={(text) => setUsername(text)}
+                  placeholder="Username"
+                  style={styles.input}
+               />
+            )}
             <TextInput
                value={email}
                onChangeText={(text) => setEmail(text)}
